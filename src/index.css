@@ -1,0 +1,126 @@
+:root {
+  line-height: 1.45;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  color: var(--bp-typography-color-default-rest, #1c2127);
+  background: linear-gradient(
+    160deg,
+    #eef2fb 0%,
+    var(--bp-lite-gray5, #fafbfd) 50%,
+    #f8fafc 100%
+  );
+}
+
+/* Dark container background per Blueprint “Dark theme” (bp6-dark on <html>). */
+html.bp6-dark body,
+html[data-bp-color-scheme='dark'] body {
+  color: var(--bp-typography-color-default-rest, #a5aab3);
+  background: linear-gradient(
+    160deg,
+    color-mix(
+        in srgb,
+        var(--bp-surface-background-color-default-rest, #1c2127) 88%,
+        #2f3d4d
+      )
+      0%,
+    var(--bp-surface-background-color-default-rest, #111418) 48%,
+    color-mix(
+        in srgb,
+        var(--bp-surface-background-color-default-rest, #111418) 92%,
+        #000
+      )
+      100%
+  );
+}
+
+#root {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: clamp(16px, 3vw, 28px)
+    clamp(16px, 4vw, 32px)
+    clamp(24px, 5vw, 48px);
+  box-sizing: border-box;
+}
+
+.app-shell .app-main {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 8px;
+}
+
+.app-top-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 18px;
+}
+
+.app-top-row > .vocab-panel {
+  flex: 1 1 520px;
+  width: auto;
+  align-self: stretch;
+}
+
+.app-top-row > .preferences-card {
+  flex: 0 0 260px;
+  min-width: 260px;
+  align-self: stretch;
+}
+
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px 32px;
+}
+
+.lede {
+  margin: 0;
+  max-width: 640px;
+}
+
+.prefs-divider {
+  margin: 12px 0 !important;
+}
+
+.preferences-card h5:last-of-type {
+  margin-bottom: 6px;
+}
+
+.vocab-margin-top {
+  margin-top: 12px !important;
+}
+
+.footer-note {
+  margin-top: 12px;
+}
+
+.vocab-footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.vocab-footer-tag {
+  vertical-align: middle;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border-radius: 4px;
+}
+
+.vocab-panel {
+  width: 100%;
+}
+
+.vocab-non-ideal {
+  margin-top: 8px !important;
+  padding-bottom: 8px !important;
+}
