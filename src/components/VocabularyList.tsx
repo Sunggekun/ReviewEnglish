@@ -86,7 +86,6 @@ export function VocabularyList({
       word,
       translationZh,
       ipa,
-      updatedAt: Date.now(),
     })
     cancelEdit()
   }

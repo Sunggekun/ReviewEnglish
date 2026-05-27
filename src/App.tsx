@@ -2,10 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   Button,
   Callout,
-  Card,
   Classes,
+  Dialog,
   Divider,
-  Elevation,
   H1,
   H5,
   HTMLSelect,
@@ -42,6 +41,7 @@ function App() {
   const [speechLang, setSpeechLang] = useState<'en-US' | 'en-GB'>('en-US')
   const [addingBusy, setAddingBusy] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  const [isPrefsOpen, setIsPrefsOpen] = useState(false)
 
   const sortedItems = useMemo(() => [...items].sort(sortWords), [items])
 
@@ -205,7 +205,7 @@ function App() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <div>
+        <div className="app-header-text">
           <H1 style={{ marginTop: 0 }}>Vocabulary practice</H1>
           <p
             className={`${Classes.RUNNING_TEXT} ${Classes.TEXT_LARGE} ${Classes.TEXT_MUTED} lede`}
@@ -218,6 +218,15 @@ function App() {
             Chinese (Traditional, zh-TW) via MyMemory (daily limits). Speech uses
             the browser&apos;s voice.
           </p>
+        </div>
+        <div className="app-header-actions">
+          <Button
+            icon="cog"
+            aria-label="Open preferences"
+            title="Preferences"
+            onClick={() => setIsPrefsOpen(true)}
+            text="Preferences"
+          />
         </div>
       </header>
 
@@ -237,56 +246,6 @@ function App() {
       <main className="app-main">
         <div className="app-top-row">
           <AddWordForm disabled={addingBusy} onSubmit={handleAddWord} />
-          <Card elevation={Elevation.ONE} className="preferences-card">
-            <H5 style={{ marginTop: 0 }}>Appearance</H5>
-            <SegmentedControl
-              intent={Intent.PRIMARY}
-              options={[
-                { value: 'light', icon: 'flash', label: 'Light' },
-                { value: 'dark', icon: 'moon', label: 'Dark' },
-                { value: 'system', icon: 'desktop', label: 'System' },
-              ]}
-              size="small"
-              value={themePreference}
-              onValueChange={(v) => setThemePreference(v as ThemePreference)}
-            />
-
-            <Divider className="prefs-divider" />
-
-            <H5>Accent</H5>
-            <HTMLSelect
-              fill
-              value={speechLang}
-              onChange={(e) =>
-                setSpeechLang(
-                  e.currentTarget.value === 'en-GB' ? 'en-GB' : 'en-US',
-                )
-              }
-              options={[
-                { label: 'American (en-US)', value: 'en-US' },
-                { label: 'British (en-GB)', value: 'en-GB' },
-              ]}
-            />
-
-            <Divider className="prefs-divider" />
-
-            <H5>Data</H5>
-            <div className="prefs-data-row">
-              <Button
-                small
-                icon="download"
-                onClick={handleExport}
-                text="Export"
-              />
-              <Button
-                small
-                icon="upload"
-                onClick={handleImportClick}
-                style={{ marginLeft: 8 }}
-                text="Import"
-              />
-            </div>
-          </Card>
         </div>
         <VocabularyList
           items={sortedItems}
@@ -311,6 +270,67 @@ function App() {
           <a href="https://blueprintjs.com/">Blueprint&nbsp;6</a> + React.
         </div>
       </footer>
+
+      <Dialog
+        className="preferences-dialog"
+        isOpen={isPrefsOpen}
+        onClose={() => setIsPrefsOpen(false)}
+        title="Preferences"
+        icon="cog"
+      >
+        <div className={Classes.DIALOG_BODY}>
+          <H5 style={{ marginTop: 0 }}>Appearance</H5>
+          <SegmentedControl
+            intent={Intent.PRIMARY}
+            options={[
+              { value: 'light', icon: 'flash', label: 'Light' },
+              { value: 'dark', icon: 'moon', label: 'Dark' },
+              { value: 'system', icon: 'desktop', label: 'System' },
+            ]}
+            size="small"
+            value={themePreference}
+            onValueChange={(v) => setThemePreference(v as ThemePreference)}
+          />
+
+          <Divider className="prefs-divider" />
+
+          <H5>Accent</H5>
+          <HTMLSelect
+            fill
+            value={speechLang}
+            onChange={(e) =>
+              setSpeechLang(
+                e.currentTarget.value === 'en-GB' ? 'en-GB' : 'en-US',
+              )
+            }
+            options={[
+              { label: 'American (en-US)', value: 'en-US' },
+              { label: 'British (en-GB)', value: 'en-GB' },
+            ]}
+          />
+
+          <Divider className="prefs-divider" />
+
+          <H5>Data</H5>
+          <div className="prefs-data-row">
+            <Button
+              icon="download"
+              onClick={handleExport}
+              text="Export"
+            />
+            <Button
+              icon="upload"
+              onClick={handleImportClick}
+              text="Import"
+            />
+          </div>
+        </div>
+        <div className={Classes.DIALOG_FOOTER}>
+          <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+            <Button onClick={() => setIsPrefsOpen(false)} text="Close" />
+          </div>
+        </div>
+      </Dialog>
     </div>
   )
 }

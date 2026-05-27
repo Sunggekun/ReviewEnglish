@@ -65,18 +65,25 @@ html[data-bp-color-scheme='dark'] body {
   align-self: stretch;
 }
 
-.app-top-row > .preferences-card {
-  flex: 0 0 260px;
-  min-width: 260px;
-  align-self: stretch;
-}
-
 .app-header {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px 32px;
+}
+
+.app-header-text {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.app-header-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
 }
 
 .lede {
@@ -88,8 +95,13 @@ html[data-bp-color-scheme='dark'] body {
   margin: 12px 0 !important;
 }
 
-.preferences-card h5:last-of-type {
+.preferences-dialog .bp6-dialog-body h5:last-of-type {
   margin-bottom: 6px;
+}
+
+.preferences-dialog .bp6-segmented-control {
+  width: 100%;
+  max-width: 100%;
 }
 
 .vocab-margin-top {
@@ -184,4 +196,194 @@ html[data-bp-color-scheme='dark'] body {
 .vocab-non-ideal {
   margin-top: 8px !important;
   padding-bottom: 8px !important;
+}
+
+.prefs-data-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.prefs-data-row .bp6-button {
+  margin-left: 0 !important;
+}
+
+/* Mobile / touch-friendly layout */
+@media (max-width: 640px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  #root {
+    max-width: 100%;
+    padding: clamp(12px, 4vw, 20px) clamp(12px, 5vw, 20px)
+      clamp(20px, 6vw, 40px);
+  }
+
+  .app-shell .app-main {
+    gap: 14px;
+    margin-top: 4px;
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .app-header-text {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .app-header h1 {
+    font-size: clamp(1.35rem, 5.5vw, 1.75rem);
+    line-height: 1.2;
+    word-wrap: break-word;
+  }
+
+  .lede {
+    max-width: none;
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+
+  .app-top-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .app-top-row > .vocab-panel {
+    flex: 1 1 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .app-header-actions {
+    width: 100%;
+  }
+
+  .app-header-actions .bp6-button {
+    width: 100%;
+    justify-content: center;
+    min-height: 40px;
+  }
+
+  .preferences-dialog {
+    width: calc(100vw - 24px);
+    max-width: 420px;
+    margin: 12px;
+  }
+
+  .prefs-data-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .prefs-data-row .bp6-button {
+    width: 100%;
+    justify-content: center;
+    min-height: 40px;
+  }
+
+  /* Stack card toolbars (add word, search) for comfortable tapping */
+  .vocab-panel .bp6-control-group {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px;
+  }
+
+  .vocab-panel .bp6-control-group > .bp6-fill {
+    width: 100% !important;
+    flex: 1 1 auto !important;
+  }
+
+  .vocab-panel .bp6-control-group > .bp6-button.bp6-fixed,
+  .vocab-panel .bp6-control-group > .bp6-tag.bp6-fixed {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 44px;
+    align-self: stretch;
+  }
+
+  .table-scroll {
+    -webkit-overflow-scrolling: touch;
+    margin-left: -2px;
+    margin-right: -2px;
+    padding-bottom: 2px;
+  }
+
+  .vocab-html-table {
+    font-size: 0.875rem;
+  }
+
+  .vocab-html-table th,
+  .vocab-html-table td {
+    padding: 7px 5px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /* Slightly favor text columns on narrow screens */
+  .vocab-html-table .vocab-cell-word {
+    width: 24%;
+  }
+
+  .vocab-html-table .vocab-cell-zh {
+    width: 32%;
+  }
+
+  .vocab-html-table .vocab-cell-ipa {
+    width: 26%;
+  }
+
+  .vocab-html-table .vocab-cell-actions {
+    width: 18%;
+  }
+
+  .vocab-html-table.vocab-html-table--select .vocab-cell-word {
+    width: 22%;
+  }
+
+  .vocab-html-table.vocab-html-table--select .vocab-cell-zh {
+    width: 28%;
+  }
+
+  .vocab-html-table.vocab-html-table--select .vocab-cell-ipa {
+    width: 24%;
+  }
+
+  .vocab-html-table .vocab-cell-actions .bp6-button {
+    min-height: 40px;
+    min-width: 40px;
+  }
+
+  .vocab-footer-inner {
+    justify-content: center;
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Reduce iOS zoom on focus for small inputs */
+  #root input.bp6-input,
+  #root .bp6-input-group .bp6-input {
+    font-size: 16px;
+  }
+
+  #root .bp6-html-select select {
+    font-size: 16px;
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  #root {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
 }
