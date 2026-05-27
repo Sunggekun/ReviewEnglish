@@ -126,8 +126,10 @@ function App() {
     setStatusMessage(null)
   }
 
-  const handleRemove = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id))
+  const handleRemove = (ids: string[]) => {
+    if (ids.length === 0) return
+    const idSet = new Set(ids)
+    setItems((prev) => prev.filter((i) => !idSet.has(i.id)))
     setStatusMessage(null)
   }
 

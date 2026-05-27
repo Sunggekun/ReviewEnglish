@@ -116,6 +116,67 @@ html[data-bp-color-scheme='dark'] body {
   border-radius: 4px;
 }
 
+.vocab-html-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.vocab-html-table th,
+.vocab-html-table td {
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.vocab-html-table .vocab-cell-word {
+  width: 26%;
+}
+
+.vocab-html-table .vocab-cell-zh {
+  width: 28%;
+}
+
+.vocab-html-table .vocab-cell-ipa {
+  width: 28%;
+}
+
+.vocab-html-table .vocab-cell-actions {
+  width: 18%;
+  white-space: nowrap;
+}
+
+.vocab-html-table.vocab-html-table--select .vocab-cell-select {
+  width: 44px;
+}
+
+.vocab-html-table.vocab-html-table--select .vocab-cell-word {
+  width: 24%;
+}
+
+.vocab-html-table.vocab-html-table--select .vocab-cell-zh {
+  width: 26%;
+}
+
+.vocab-html-table.vocab-html-table--select .vocab-cell-ipa {
+  width: 26%;
+}
+
+.vocab-html-table.vocab-html-table--select .vocab-cell-actions {
+  width: 16%;
+}
+
+.vocab-html-table .vocab-row-selected td {
+  background: color-mix(
+    in srgb,
+    var(--bp-intent-primary-background-color-hover, #d3e1f8) 35%,
+    transparent
+  );
+}
+
+.vocab-html-table .vocab-cell-input {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .vocab-panel {
   width: 100%;
 }

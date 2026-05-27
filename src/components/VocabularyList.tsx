@@ -4,6 +4,7 @@ import {
   ButtonGroup,
   Callout,
   Card,
+  Checkbox,
   Classes,
   ControlGroup,
   Elevation,
@@ -24,7 +25,7 @@ export type VocabularyListProps = {
   query: string
   onQueryChange: (value: string) => void
   onUpdate: (item: VocabItem) => void
-  onRemove: (id: string) => void
+  onRemove: (ids: string[]) => void
   speechLang?: string
 }
 
@@ -57,6 +58,9 @@ export function VocabularyList({
   const [meaningsLoading, setMeaningsLoading] = useState(false)
   const [meaningsError, setMeaningsError] = useState<string | null>(null)
   const [meanings, setMeanings] = useState<DictionaryMeaning[]>([])
+
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
 
   const startEdit = (item: VocabItem) => {
     setEditingId(item.id)
@@ -97,6 +101,53 @@ export function VocabularyList({
     setMeanings([])
     setMeaningsError(null)
     setMeaningsLoading(false)
+  }
+
+  const enterSelectMode = () => {
+    cancelEdit()
+    setSelectMode(true)
+    setSelectedIds(new Set())
+  }
+
+  const exitSelectMode = () => {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const allFilteredSelected =
+    filtered.length > 0 && filtered.every((item) => selectedIds.has(item.id))
+  const someFilteredSelected =
+    filtered.some((item) => selectedIds.has(item.id)) && !allFilteredSelected
+
+  const toggleSelectAllFiltered = () => {
+    if (allFilteredSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        for (const item of filtered) next.delete(item.id)
+        return next
+      })
+      return
+    }
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      for (const item of filtered) next.add(item.id)
+      return next
+    })
+  }
+
+  const deleteSelected = () => {
+    if (selectedIds.size === 0) return
+    onRemove([...selectedIds])
+    exitSelectMode()
   }
 
   const openMeaningsDialog = async (word: string) => {
@@ -143,8 +194,49 @@ export function VocabularyList({
             >
               {filtered.length}/{items.length}
             </Tag>
+            {items.length > 0 ? (
+              selectMode ? (
+                <>
+                  <Button
+                    className={Classes.FIXED}
+                    icon="trash"
+                    intent="danger"
+                    disabled={selectedIds.size === 0}
+                    onClick={deleteSelected}
+                  />
+                  <Button
+                    className={Classes.FIXED}
+                    icon="cross"
+                    onClick={exitSelectMode}
+                  />
+                </>
+              ) : (
+                <Button
+                  className={Classes.FIXED}
+                  icon="trash"
+                  intent="danger"
+                  aria-label="Select words to delete"
+                  title="Select words to delete"
+                  onClick={enterSelectMode}
+                />
+              )
+            ) : null}
           </ControlGroup>
         </FormGroup>
+
+        {selectMode ? (
+          <Callout
+            compact
+            className="vocab-margin-top"
+            icon="multi-select"
+            intent="primary"
+          >
+            Select rows to remove, then choose Delete selected.
+            {selectedIds.size > 0
+              ? ` (${selectedIds.size} selected)`
+              : null}
+          </Callout>
+        ) : null}
 
         {pronounceNotice ? (
           <Callout
@@ -177,11 +269,25 @@ export function VocabularyList({
               bordered
               interactive
               striped
-              className="vocab-html-table"
+              className={
+                selectMode
+                  ? 'vocab-html-table vocab-html-table--select'
+                  : 'vocab-html-table'
+              }
               style={{ width: '100%' }}
             >
               <thead>
                 <tr>
+                  {selectMode ? (
+                    <th scope="col" className="vocab-cell-select">
+                      <Checkbox
+                        aria-label="Select all visible words"
+                        checked={allFilteredSelected}
+                        indeterminate={someFilteredSelected}
+                        onChange={toggleSelectAllFiltered}
+                      />
+                    </th>
+                  ) : null}
                   <th scope="col">Word</th>
                   <th scope="col">Chinese</th>
                   <th scope="col">Phonics (IPA)</th>
@@ -190,30 +296,40 @@ export function VocabularyList({
               </thead>
               <tbody>
                 {filtered.map((item) => (
-                  <tr key={item.id}>
-                    <td>
+                  <tr
+                    key={item.id}
+                    className={
+                      selectMode && selectedIds.has(item.id)
+                        ? 'vocab-row-selected'
+                        : undefined
+                    }
+                  >
+                    {selectMode ? (
+                      <td className="vocab-cell-select">
+                        <Checkbox
+                          aria-label={`Select ${item.word}`}
+                          checked={selectedIds.has(item.id)}
+                          onChange={() => toggleSelected(item.id)}
+                        />
+                      </td>
+                    ) : null}
+                    <td className="vocab-cell-word">
                       {editingId === item.id ? (
-                        <ControlGroup fill={false} vertical={false}>
-                          <Button
-                            icon="floppy-disk"
-                            intent="success"
-                            aria-label={`Save changes for ${item.word}`}
-                            size="small"
-                            minimal
-                            onClick={() => saveEdit(item)}
-                          />
-                          <InputGroup
-                            aria-label={`Word for ${item.word}`}
-                            value={draftWord}
-                            onChange={(evt) => setDraftWord(evt.target.value)}
-                            autoFocus
-                            onKeyDown={(evt) => {
-                              if (evt.key === 'Escape') cancelEdit()
-                              if (evt.key === 'Enter') saveEdit(item)
-                            }}
-                            small
-                          />
-                        </ControlGroup>
+                        <InputGroup
+                          className="vocab-cell-input"
+                          fill
+                          aria-label={`Word for ${item.word}`}
+                          value={draftWord}
+                          onChange={(evt) => setDraftWord(evt.target.value)}
+                          autoFocus
+                          onKeyDown={(evt) => {
+                            if (evt.key === 'Escape') cancelEdit()
+                            if (evt.key === 'Enter') saveEdit(item)
+                          }}
+                          small
+                        />
+                      ) : selectMode ? (
+                        <strong>{item.word}</strong>
                       ) : (
                         <span
                           role="button"
@@ -230,9 +346,11 @@ export function VocabularyList({
                         </span>
                       )}
                     </td>
-                    <td>
+                    <td className="vocab-cell-zh">
                       {editingId === item.id ? (
                         <InputGroup
+                          className="vocab-cell-input"
+                          fill
                           aria-label={`Chinese translation for ${item.word}`}
                           value={draftZh}
                           onChange={(evt) => setDraftZh(evt.target.value)}
@@ -242,6 +360,8 @@ export function VocabularyList({
                           }}
                           small
                         />
+                      ) : selectMode ? (
+                        item.translationZh || emDash
                       ) : (
                         <span
                           role="button"
@@ -258,9 +378,11 @@ export function VocabularyList({
                         </span>
                       )}
                     </td>
-                    <td style={{ fontFamily: 'Georgia, serif' }}>
+                    <td className="vocab-cell-ipa" style={{ fontFamily: 'Georgia, serif' }}>
                       {editingId === item.id ? (
                         <InputGroup
+                          className="vocab-cell-input"
+                          fill
                           aria-label={`Phonics (IPA) for ${item.word}`}
                           value={draftIpa}
                           onChange={(evt) => setDraftIpa(evt.target.value)}
@@ -270,6 +392,8 @@ export function VocabularyList({
                           }}
                           small
                         />
+                      ) : selectMode ? (
+                        item.ipa || item.phonics || emDash
                       ) : (
                         <span
                           role="button"
@@ -286,30 +410,38 @@ export function VocabularyList({
                         </span>
                       )}
                     </td>
-                    <td>
-                      <ButtonGroup variant="minimal" size="small">
-                        <Button
-                          icon="volume-up"
-                          aria-label={`Pronounce ${item.word}`}
-                          onClick={() => handlePronounce(item.word)}
-                        />
-                        <Button
-                          icon="info-sign"
-                          aria-label={`Show meanings for ${item.word}`}
-                          title="Show meanings from Free Dictionary API"
-                          onClick={() => openMeaningsDialog(item.word)}
-                        />
-                        <Button
-                          icon="trash"
-                          aria-label={`Remove ${item.word}`}
-                          disabled={editingId === item.id}
-                          intent="danger"
-                          title={editingId === item.id ? 'Save changes first' : undefined}
-                          onClick={() => {
-                            onRemove(item.id)
-                          }}
-                        />
-                      </ButtonGroup>
+                    <td className="vocab-cell-actions">
+                      {selectMode ? null : editingId === item.id ? (
+                        <ButtonGroup variant="minimal" size="small">
+                          <Button
+                            icon="floppy-disk"
+                            intent="success"
+                            aria-label={`Save changes for ${item.word}`}
+                            title="Save"
+                            onClick={() => saveEdit(item)}
+                          />
+                          <Button
+                            icon="cross"
+                            aria-label={`Cancel editing ${item.word}`}
+                            title="Cancel"
+                            onClick={cancelEdit}
+                          />
+                        </ButtonGroup>
+                      ) : (
+                        <ButtonGroup variant="minimal" size="small">
+                          <Button
+                            icon="volume-up"
+                            aria-label={`Pronounce ${item.word}`}
+                            onClick={() => handlePronounce(item.word)}
+                          />
+                          <Button
+                            icon="info-sign"
+                            aria-label={`Show meanings for ${item.word}`}
+                            title="Show meanings from Free Dictionary API"
+                            onClick={() => openMeaningsDialog(item.word)}
+                          />
+                        </ButtonGroup>
+                      )}
                     </td>
                   </tr>
                 ))}
