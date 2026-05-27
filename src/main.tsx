@@ -3,6 +3,7 @@ import '@blueprintjs/icons/lib/css/blueprint-icons.css'
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { FocusStyleManager } from '@blueprintjs/core'
 import {
   applyBpColorScheme,
   loadThemePreference,
@@ -10,6 +11,8 @@ import {
 } from './storage/themePreference'
 import './index.css'
 import App from './App.tsx'
+
+FocusStyleManager.onlyShowFocusOnTabs()
 
 applyBpColorScheme(resolveIsDark(loadThemePreference()))
 

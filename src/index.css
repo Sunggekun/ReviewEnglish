@@ -140,20 +140,27 @@ html[data-bp-color-scheme='dark'] body {
 }
 
 .vocab-html-table .vocab-cell-word {
-  width: 26%;
+  width: 40%;
 }
 
 .vocab-html-table .vocab-cell-zh {
-  width: 28%;
+  width: 30%;
 }
 
 .vocab-html-table .vocab-cell-ipa {
-  width: 28%;
+  width: 30%;
 }
 
-.vocab-html-table .vocab-cell-actions {
-  width: 18%;
+.vocab-cell-word-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vocab-cell-word-inner > .bp6-button-group {
   white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .vocab-html-table.vocab-html-table--select .vocab-cell-select {
@@ -161,19 +168,15 @@ html[data-bp-color-scheme='dark'] body {
 }
 
 .vocab-html-table.vocab-html-table--select .vocab-cell-word {
-  width: 24%;
+  width: 38%;
 }
 
 .vocab-html-table.vocab-html-table--select .vocab-cell-zh {
-  width: 26%;
+  width: 29%;
 }
 
 .vocab-html-table.vocab-html-table--select .vocab-cell-ipa {
-  width: 26%;
-}
-
-.vocab-html-table.vocab-html-table--select .vocab-cell-actions {
-  width: 16%;
+  width: 29%;
 }
 
 .vocab-html-table .vocab-row-selected td {
@@ -329,23 +332,19 @@ html[data-bp-color-scheme='dark'] body {
 
   /* Slightly favor text columns on narrow screens */
   .vocab-html-table .vocab-cell-word {
-    width: 24%;
+    width: 42%;
   }
 
   .vocab-html-table .vocab-cell-zh {
-    width: 32%;
+    width: 30%;
   }
 
   .vocab-html-table .vocab-cell-ipa {
-    width: 26%;
-  }
-
-  .vocab-html-table .vocab-cell-actions {
-    width: 18%;
+    width: 28%;
   }
 
   .vocab-html-table.vocab-html-table--select .vocab-cell-word {
-    width: 22%;
+    width: 38%;
   }
 
   .vocab-html-table.vocab-html-table--select .vocab-cell-zh {
@@ -353,10 +352,10 @@ html[data-bp-color-scheme='dark'] body {
   }
 
   .vocab-html-table.vocab-html-table--select .vocab-cell-ipa {
-    width: 24%;
+    width: 26%;
   }
 
-  .vocab-html-table .vocab-cell-actions .bp6-button {
+  .vocab-cell-word-inner .bp6-button {
     min-height: 40px;
     min-width: 40px;
   }

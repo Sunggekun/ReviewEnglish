@@ -290,7 +290,6 @@ export function VocabularyList({
                   <th scope="col">Word</th>
                   <th scope="col">Chinese</th>
                   <th scope="col">Phonics (IPA)</th>
-                  <th scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -313,37 +312,70 @@ export function VocabularyList({
                       </td>
                     ) : null}
                     <td className="vocab-cell-word">
-                      {editingId === item.id ? (
-                        <InputGroup
-                          className="vocab-cell-input"
-                          fill
-                          aria-label={`Word for ${item.word}`}
-                          value={draftWord}
-                          onChange={(evt) => setDraftWord(evt.target.value)}
-                          autoFocus
-                          onKeyDown={(evt) => {
-                            if (evt.key === 'Escape') cancelEdit()
-                            if (evt.key === 'Enter') saveEdit(item)
-                          }}
-                          small
-                        />
-                      ) : selectMode ? (
-                        <strong>{item.word}</strong>
-                      ) : (
-                        <span
-                          role="button"
-                          tabIndex={0}
-                          style={{ cursor: 'text' }}
-                          onClick={() => startEdit(item)}
-                          onKeyDown={(evt) => {
-                            if (evt.key === 'Enter' || evt.key === ' ') startEdit(item)
-                          }}
-                          aria-label={`Edit word for ${item.word}`}
-                          title="Click to edit"
-                        >
+                      <div className="vocab-cell-word-inner">
+                        {editingId === item.id ? (
+                          <InputGroup
+                            className="vocab-cell-input"
+                            fill
+                            aria-label={`Word for ${item.word}`}
+                            value={draftWord}
+                            onChange={(evt) => setDraftWord(evt.target.value)}
+                            autoFocus
+                            onKeyDown={(evt) => {
+                              if (evt.key === 'Escape') cancelEdit()
+                              if (evt.key === 'Enter') saveEdit(item)
+                            }}
+                            small
+                          />
+                        ) : selectMode ? (
                           <strong>{item.word}</strong>
-                        </span>
-                      )}
+                        ) : (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            style={{ cursor: 'text' }}
+                            onClick={() => startEdit(item)}
+                            onKeyDown={(evt) => {
+                              if (evt.key === 'Enter' || evt.key === ' ') startEdit(item)
+                            }}
+                            aria-label={`Edit word for ${item.word}`}
+                            title="Click to edit"
+                          >
+                            <strong>{item.word}</strong>
+                          </span>
+                        )}
+                        {selectMode ? null : editingId === item.id ? (
+                          <ButtonGroup variant="minimal" size="small">
+                            <Button
+                              icon="floppy-disk"
+                              intent="success"
+                              aria-label={`Save changes for ${item.word}`}
+                              title="Save"
+                              onClick={() => saveEdit(item)}
+                            />
+                            <Button
+                              icon="cross"
+                              aria-label={`Cancel editing ${item.word}`}
+                              title="Cancel"
+                              onClick={cancelEdit}
+                            />
+                          </ButtonGroup>
+                        ) : (
+                          <ButtonGroup variant="minimal" size="small">
+                            <Button
+                              icon="volume-up"
+                              aria-label={`Pronounce ${item.word}`}
+                              onClick={() => handlePronounce(item.word)}
+                            />
+                            <Button
+                              icon="info-sign"
+                              aria-label={`Show meanings for ${item.word}`}
+                              title="Show meanings from Free Dictionary API"
+                              onClick={() => openMeaningsDialog(item.word)}
+                            />
+                          </ButtonGroup>
+                        )}
+                      </div>
                     </td>
                     <td className="vocab-cell-zh">
                       {editingId === item.id ? (
@@ -407,39 +439,6 @@ export function VocabularyList({
                         >
                           {item.ipa || item.phonics || emDash}
                         </span>
-                      )}
-                    </td>
-                    <td className="vocab-cell-actions">
-                      {selectMode ? null : editingId === item.id ? (
-                        <ButtonGroup variant="minimal" size="small">
-                          <Button
-                            icon="floppy-disk"
-                            intent="success"
-                            aria-label={`Save changes for ${item.word}`}
-                            title="Save"
-                            onClick={() => saveEdit(item)}
-                          />
-                          <Button
-                            icon="cross"
-                            aria-label={`Cancel editing ${item.word}`}
-                            title="Cancel"
-                            onClick={cancelEdit}
-                          />
-                        </ButtonGroup>
-                      ) : (
-                        <ButtonGroup variant="minimal" size="small">
-                          <Button
-                            icon="volume-up"
-                            aria-label={`Pronounce ${item.word}`}
-                            onClick={() => handlePronounce(item.word)}
-                          />
-                          <Button
-                            icon="info-sign"
-                            aria-label={`Show meanings for ${item.word}`}
-                            title="Show meanings from Free Dictionary API"
-                            onClick={() => openMeaningsDialog(item.word)}
-                          />
-                        </ButtonGroup>
                       )}
                     </td>
                   </tr>
