@@ -4,11 +4,16 @@
  */
 const MYMEMORY = 'https://api.mymemory.translated.net/get'
 
-export async function translateEnglishToZh(text: string): Promise<string> {
+export async function translateEnglish(
+  text: string,
+  targetLang: string,
+): Promise<string> {
   const q = text.trim()
   if (!q) return ''
 
-  const url = `${MYMEMORY}?q=${encodeURIComponent(q)}&langpair=en|zh-TW`
+  const url = `${MYMEMORY}?q=${encodeURIComponent(q)}&langpair=en|${encodeURIComponent(
+    targetLang,
+  )}`
 
   const res = await fetch(url, { headers: { Accept: 'application/json' } })
   if (!res.ok)
@@ -23,4 +28,9 @@ export async function translateEnglishToZh(text: string): Promise<string> {
   if (!out) throw new Error('No translation in response')
 
   return out
+}
+
+// Back-compat: previous API name used by older code.
+export async function translateEnglishToZh(text: string): Promise<string> {
+  return translateEnglish(text, 'zh-TW')
 }

@@ -27,6 +27,7 @@ export type VocabularyListProps = {
   onUpdate: (item: VocabItem) => void
   onRemove: (ids: string[]) => void
   speechVoiceURI?: string
+  translationLanguageLabel?: string
 }
 
 export function VocabularyList({
@@ -36,6 +37,7 @@ export function VocabularyList({
   onUpdate,
   onRemove,
   speechVoiceURI = '',
+  translationLanguageLabel = 'Translation',
 }: VocabularyListProps) {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -180,7 +182,7 @@ export function VocabularyList({
               fill
               id="search-vocab"
               leftIcon="search"
-              placeholder="Filter by word, Chinese, or IPA…"
+              placeholder={`Filter by word, ${translationLanguageLabel}, or IPA…`}
               value={query}
               type="search"
               autoComplete="off"
@@ -295,7 +297,7 @@ export function VocabularyList({
                     </th>
                   ) : null}
                   <th scope="col">Word</th>
-                  <th scope="col">Chinese</th>
+                  <th scope="col">{translationLanguageLabel}</th>
                   <th scope="col">Phonics (IPA)</th>
                 </tr>
               </thead>
@@ -389,7 +391,7 @@ export function VocabularyList({
                         <InputGroup
                           className="vocab-cell-input"
                           fill
-                          aria-label={`Chinese translation for ${item.word}`}
+                          aria-label={`${translationLanguageLabel} for ${item.word}`}
                           value={draftZh}
                           onChange={(evt) => setDraftZh(evt.target.value)}
                           onKeyDown={(evt) => {
@@ -409,7 +411,7 @@ export function VocabularyList({
                           onKeyDown={(evt) => {
                             if (evt.key === 'Enter' || evt.key === ' ') startEdit(item)
                           }}
-                          aria-label={`Edit Chinese translation for ${item.word}`}
+                          aria-label={`Edit ${translationLanguageLabel} for ${item.word}`}
                           title="Click to edit"
                         >
                           {item.translationZh || emDash}

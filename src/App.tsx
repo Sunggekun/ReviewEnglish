@@ -21,7 +21,7 @@ import {
 } from './storage/vocabStore'
 import type { VocabItem } from './types/vocab'
 import { lookupEnglishWord } from './services/dictionary'
-import { translateEnglishToZh } from './services/translation'
+import { translateEnglish } from './services/translation'
 import type { ThemePreference } from './storage/themePreference'
 import { useThemePreference } from './hooks/useThemePreference'
 import { useSpeechVoices } from './hooks/useSpeechVoices'
@@ -31,6 +31,12 @@ import { groupVoicesByLang } from './services/speechVoices'
 import { useAuth } from './hooks/useAuth'
 import { useVocabulary } from './hooks/useVocabulary'
 import { formatAuthError } from './firebase/auth'
+import {
+  getTranslateLanguageLabel,
+  TRANSLATE_LANGUAGE_OPTIONS,
+  type TranslateLanguage,
+} from './storage/translationPreference'
+import { useTranslateLanguagePreference } from './hooks/useTranslateLanguagePreference'
 
 import { getFirebaseConfigIssue } from './firebase/config'
 
@@ -57,6 +63,12 @@ function App() {
   const voiceGroups = useMemo(() => groupVoicesByLang(voices), [voices])
   const { voiceURI: speechVoiceURI, setVoiceURI: setSpeechVoiceURI } =
     useSpeechVoicePreference()
+  const { language: translateLanguage, setLanguage: setTranslateLanguage } =
+    useTranslateLanguagePreference()
+  const translateLanguageLabel = useMemo(
+    () => getTranslateLanguageLabel(translateLanguage),
+    [translateLanguage],
+  )
 
   const syncStatusLabel =
     syncStatus === 'syncing'
@@ -113,7 +125,7 @@ function App() {
     try {
       const [dictOutcome, zhOutcome] = await Promise.allSettled([
         lookupEnglishWord(word),
-        translateEnglishToZh(word),
+        translateEnglish(word, translateLanguage),
       ])
 
       let ipa = ''
@@ -145,11 +157,11 @@ function App() {
 
       if (zhOutcome.status === 'rejected')
         hints.push(
-          `Could not translate automatically (${zhOutcome.reason instanceof Error ? zhOutcome.reason.message : String(zhOutcome.reason)}). Edit Chinese manually.`,
+          `Could not translate automatically (${zhOutcome.reason instanceof Error ? zhOutcome.reason.message : String(zhOutcome.reason)}). Edit ${translateLanguageLabel} manually.`,
         )
       else if (!translationZh)
         hints.push(
-          'Chinese translation missing. Paste or type it manually in Edit.',
+          `${translateLanguageLabel} translation missing. Paste or type it manually in Edit.`,
         )
 
       setStatusMessage(hints.length ? hints.join(' ') : null)
@@ -262,8 +274,8 @@ function App() {
               Free Dictionary API
             </a>
             {' · '}
-            Chinese (Traditional, zh-TW) via MyMemory (daily limits). Speech uses
-            the browser&apos;s voice.
+            {translateLanguageLabel} via MyMemory (daily limits). Speech uses the
+            browser&apos;s voice.
           </p>
         </div>
         <div className="app-header-actions">
@@ -301,6 +313,7 @@ function App() {
           onUpdate={handleUpdate}
           onRemove={handleRemove}
           speechVoiceURI={speechVoiceURI}
+          translationLanguageLabel={translateLanguageLabel}
         />
       </main>
 
@@ -391,6 +404,25 @@ function App() {
                 pronounceWord(PREVIEW_SAMPLE, { voiceURI: speechVoiceURI })
               }
             />
+          </div>
+
+          <Divider className="prefs-divider" />
+
+          <H5>Translate</H5>
+          <div className="prefs-voice-row">
+            <HTMLSelect
+              fill
+              value={translateLanguage}
+              onChange={(e) =>
+                setTranslateLanguage(e.currentTarget.value as TranslateLanguage)
+              }
+            >
+              {TRANSLATE_LANGUAGE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </HTMLSelect>
           </div>
 
           <Divider className="prefs-divider" />
