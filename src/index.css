@@ -6,42 +6,30 @@ body {
   margin: 0;
   min-height: 100svh;
   color: var(--bp-typography-color-default-rest, #1c2127);
-  background: linear-gradient(
-    160deg,
-    #eef2fb 0%,
-    var(--bp-lite-gray5, #fafbfd) 50%,
-    #f8fafc 100%
-  );
+  background: linear-gradient(160deg,
+      #eef2fb 0%,
+      var(--bp-lite-gray5, #fafbfd) 50%,
+      #f8fafc 100%);
 }
 
 /* Dark container background per Blueprint “Dark theme” (bp6-dark on <html>). */
 html.bp6-dark body,
 html[data-bp-color-scheme='dark'] body {
   color: var(--bp-typography-color-default-rest, #a5aab3);
-  background: linear-gradient(
-    160deg,
-    color-mix(
-        in srgb,
+  background: linear-gradient(160deg,
+      color-mix(in srgb,
         var(--bp-surface-background-color-default-rest, #1c2127) 88%,
-        #2f3d4d
-      )
-      0%,
-    var(--bp-surface-background-color-default-rest, #111418) 48%,
-    color-mix(
-        in srgb,
+        #2f3d4d) 0%,
+      var(--bp-surface-background-color-default-rest, #111418) 48%,
+      color-mix(in srgb,
         var(--bp-surface-background-color-default-rest, #111418) 92%,
-        #000
-      )
-      100%
-  );
+        #000) 100%);
 }
 
 #root {
   max-width: 1024px;
   margin: 0 auto;
-  padding: clamp(16px, 3vw, 28px)
-    clamp(16px, 4vw, 32px)
-    clamp(24px, 5vw, 48px);
+  padding: clamp(16px, 3vw, 28px) clamp(16px, 4vw, 32px) clamp(24px, 5vw, 48px);
   box-sizing: border-box;
 }
 
@@ -59,7 +47,7 @@ html[data-bp-color-scheme='dark'] body {
   gap: 18px;
 }
 
-.app-top-row > .vocab-panel {
+.app-top-row>.vocab-panel {
   flex: 1 1 520px;
   width: auto;
   align-self: stretch;
@@ -169,7 +157,7 @@ html[data-bp-color-scheme='dark'] body {
   flex-wrap: wrap;
 }
 
-.vocab-cell-word-inner > .bp6-button-group {
+.vocab-cell-word-inner>.bp6-button-group {
   white-space: nowrap;
   flex: 0 0 auto;
 }
@@ -191,11 +179,9 @@ html[data-bp-color-scheme='dark'] body {
 }
 
 .vocab-html-table .vocab-row-selected td {
-  background: color-mix(
-    in srgb,
-    var(--bp-intent-primary-background-color-hover, #d3e1f8) 35%,
-    transparent
-  );
+  background: color-mix(in srgb,
+      var(--bp-intent-primary-background-color-hover, #d3e1f8) 35%,
+      transparent);
 }
 
 .vocab-html-table .vocab-cell-input {
@@ -205,6 +191,44 @@ html[data-bp-color-scheme='dark'] body {
 
 .vocab-panel {
   width: 100%;
+}
+
+/* Prevent the count Tag (e.g. "12/120") from shrinking/truncating in ControlGroup. */
+.vocab-panel .bp6-control-group>.bp6-tag {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: none;
+  white-space: nowrap;
+}
+
+.vocab-select-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  position: sticky;
+  top: 12px;
+  z-index: 20;
+  padding: 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb,
+      var(--bp-surface-background-color-default-rest, #ffffff) 92%,
+      transparent);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 18px rgba(16, 22, 26, 0.12);
+}
+
+.vocab-select-topbar__meta {
+  flex: 0 0 auto;
+}
+
+.vocab-select-topbar__actions {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .vocab-non-ideal {
@@ -242,8 +266,7 @@ html[data-bp-color-scheme='dark'] body {
 
   #root {
     max-width: 100%;
-    padding: clamp(12px, 4vw, 20px) clamp(12px, 5vw, 20px)
-      clamp(20px, 6vw, 40px);
+    padding: clamp(12px, 4vw, 20px) clamp(12px, 5vw, 20px) clamp(20px, 6vw, 40px);
   }
 
   .app-shell .app-main {
@@ -280,7 +303,7 @@ html[data-bp-color-scheme='dark'] body {
     gap: 14px;
   }
 
-  .app-top-row > .vocab-panel {
+  .app-top-row>.vocab-panel {
     flex: 1 1 100%;
     min-width: 0;
     width: 100%;
@@ -320,18 +343,33 @@ html[data-bp-color-scheme='dark'] body {
     gap: 10px;
   }
 
-  .vocab-panel .bp6-control-group > .bp6-fill {
+  .vocab-panel .bp6-control-group>.bp6-fill {
     width: 100% !important;
     flex: 1 1 auto !important;
   }
 
-  .vocab-panel .bp6-control-group > .bp6-button.bp6-fixed,
-  .vocab-panel .bp6-control-group > .bp6-tag.bp6-fixed {
+  .vocab-panel .bp6-control-group>.bp6-button,
+  .vocab-panel .bp6-control-group>.bp6-tag {
     width: 100%;
     justify-content: center;
     box-sizing: border-box;
     min-height: 44px;
     align-self: stretch;
+  }
+
+  .vocab-select-topbar {
+    top: calc(env(safe-area-inset-top, 0px) + 8px);
+  }
+
+  .vocab-select-topbar__actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .vocab-select-topbar__actions .bp6-button {
+    flex: 1 1 0;
+    min-height: 44px;
+    justify-content: center;
   }
 
   .table-scroll {
@@ -342,7 +380,7 @@ html[data-bp-color-scheme='dark'] body {
   }
 
   .vocab-html-table {
-    font-size: 0.875rem;
+    font-size: 1rem;
   }
 
   .vocab-html-table th,
@@ -350,6 +388,8 @@ html[data-bp-color-scheme='dark'] body {
     padding: 7px 5px;
     overflow-wrap: anywhere;
     word-break: break-word;
+    font-size: 1rem;
+    line-height: 1.35;
   }
 
   /* Slightly favor text columns on narrow screens */

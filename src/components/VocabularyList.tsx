@@ -186,32 +186,12 @@ export function VocabularyList({
               autoComplete="off"
               onChange={(evt) => onQueryChange(evt.target.value)}
             />
-            <Tag
-              className={Classes.FIXED}
-              minimal
-              intent="primary"
-            >
+            <Tag minimal intent="primary">
               {filtered.length}/{items.length}
             </Tag>
             {items.length > 0 ? (
-              selectMode ? (
-                <>
-                  <Button
-                    className={Classes.FIXED}
-                    icon="trash"
-                    intent="danger"
-                    disabled={selectedIds.size === 0}
-                    onClick={deleteSelected}
-                  />
-                  <Button
-                    className={Classes.FIXED}
-                    icon="cross"
-                    onClick={exitSelectMode}
-                  />
-                </>
-              ) : (
+              selectMode ? null : (
                 <Button
-                  className={Classes.FIXED}
                   icon="trash"
                   intent="danger"
                   aria-label="Select words to delete"
@@ -222,6 +202,33 @@ export function VocabularyList({
             ) : null}
           </ControlGroup>
         </FormGroup>
+
+        {selectMode ? (
+          <div
+            className="vocab-select-topbar"
+            role="region"
+            aria-label="Delete selected words"
+          >
+            <div className="vocab-select-topbar__meta">
+              <Tag minimal intent="primary">
+                {selectedIds.size} selected
+              </Tag>
+            </div>
+            <div className="vocab-select-topbar__actions">
+              <Button
+                icon="trash"
+                intent="danger"
+                disabled={selectedIds.size === 0}
+                onClick={deleteSelected}
+              >
+                Delete
+              </Button>
+              <Button icon="cross" onClick={exitSelectMode}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : null}
 
         {selectMode ? (
           <Callout
