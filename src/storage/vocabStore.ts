@@ -2,7 +2,7 @@ import type { VocabItem } from '../types/vocab'
 
 const STORAGE_KEY = 'reviewenglish-vocab-v1'
 
-function normalizeItem(raw: unknown): VocabItem | null {
+export function normalizeItem(raw: unknown): VocabItem | null {
   if (!raw || typeof raw !== 'object') return null
   const o = raw as Record<string, unknown>
   if (typeof o.id !== 'string' || typeof o.word !== 'string') return null

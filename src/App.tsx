@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Button,
   Callout,
@@ -15,10 +15,8 @@ import {
 import { AddWordForm } from './components/AddWordForm'
 import { VocabularyList } from './components/VocabularyList'
 import {
-  loadVocabulary,
   newVocabItem,
   parseVocabularyImport,
-  saveVocabulary,
   serializeVocabulary,
 } from './storage/vocabStore'
 import type { VocabItem } from './types/vocab'
@@ -26,8 +24,11 @@ import { lookupEnglishWord } from './services/dictionary'
 import { translateEnglishToZh } from './services/translation'
 import type { ThemePreference } from './storage/themePreference'
 import { useThemePreference } from './hooks/useThemePreference'
+import { useAuth } from './hooks/useAuth'
+import { useVocabulary } from './hooks/useVocabulary'
+import { formatAuthError } from './firebase/auth'
 
-import './index.css'
+import { getFirebaseConfigIssue } from './firebase/config'
 
 function sortWords(a: VocabItem, b: VocabItem): number {
   return a.word.localeCompare(b.word, undefined, {
@@ -36,21 +37,62 @@ function sortWords(a: VocabItem, b: VocabItem): number {
 }
 
 function App() {
-  const [items, setItems] = useState<VocabItem[]>(() => loadVocabulary())
+  const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth()
+  const { items, setItems, removeItems, syncStatus, syncError } = useVocabulary(user)
   const [query, setQuery] = useState('')
   const [speechLang, setSpeechLang] = useState<'en-US' | 'en-GB'>('en-US')
   const [addingBusy, setAddingBusy] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [isPrefsOpen, setIsPrefsOpen] = useState(false)
+  const [authBusy, setAuthBusy] = useState(false)
 
   const sortedItems = useMemo(() => [...items].sort(sortWords), [items])
 
   const { preference: themePreference, setPreference: setThemePreference } =
     useThemePreference()
 
-  useEffect(() => {
-    saveVocabulary(items)
-  }, [items])
+  const syncStatusLabel =
+    syncStatus === 'syncing'
+      ? 'Syncing…'
+      : syncStatus === 'error'
+        ? 'Sync error'
+        : syncStatus === 'offline'
+          ? 'Offline'
+          : user
+            ? 'Synced'
+            : null
+
+  const firebaseConfigIssue = useMemo(() => getFirebaseConfigIssue(), [])
+
+  const handleSignIn = async () => {
+    setAuthBusy(true)
+    setStatusMessage(null)
+    try {
+      await signInWithGoogle()
+      setStatusMessage('Signed in. Vocabulary sync is enabled for this account.')
+    } catch (error) {
+      setStatusMessage(`Sign-in failed: ${formatAuthError(error)}`)
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
+  const handleSignOut = async () => {
+    setAuthBusy(true)
+    setStatusMessage(null)
+    try {
+      await signOut()
+      setStatusMessage('Signed out. Your vocabulary stays on this device.')
+    } catch (error) {
+      setStatusMessage(
+        error instanceof Error
+          ? `Sign-out failed: ${error.message}`
+          : 'Sign-out failed.',
+      )
+    } finally {
+      setAuthBusy(false)
+    }
+  }
 
   const handleAddWord = async (word: string) => {
     const lowered = word.toLowerCase()
@@ -127,9 +169,7 @@ function App() {
   }
 
   const handleRemove = (ids: string[]) => {
-    if (ids.length === 0) return
-    const idSet = new Set(ids)
-    setItems((prev) => prev.filter((i) => !idSet.has(i.id)))
+    removeItems(ids)
     setStatusMessage(null)
   }
 
@@ -265,8 +305,19 @@ function App() {
           <Tag minimal intent="primary" round className="vocab-footer-tag">
             local-first
           </Tag>
-          Data stays in <code className={Classes.CODE}>localStorage</code> — clear site
-          data to reset. UI:{' '}
+          Data stays in <code className={Classes.CODE}>localStorage</code>
+          {user ? (
+            <>
+              {' '}
+              and syncs to your Google account when signed in
+            </>
+          ) : (
+            <>
+              {' '}
+              — sign in with Google in Preferences to sync across devices
+            </>
+          )}
+          . UI:{' '}
           <a href="https://blueprintjs.com/">Blueprint&nbsp;6</a> + React.
         </div>
       </footer>
@@ -308,6 +359,62 @@ function App() {
               { label: 'British (en-GB)', value: 'en-GB' },
             ]}
           />
+
+          <Divider className="prefs-divider" />
+
+          <H5>Account</H5>
+          {firebaseConfigIssue ? (
+            <Callout compact intent={Intent.WARNING} title={firebaseConfigIssue} />
+          ) : null}
+          {authLoading ? (
+            <p className={`${Classes.RUNNING_TEXT} ${Classes.TEXT_MUTED}`}>
+              Checking sign-in status…
+            </p>
+          ) : user ? (
+            <div className="prefs-account-block">
+              <p className={`${Classes.RUNNING_TEXT} prefs-account-email`}>
+                Signed in as <strong>{user.email ?? user.uid}</strong>
+              </p>
+              {syncStatusLabel ? (
+                <Tag
+                  minimal
+                  round
+                  intent={
+                    syncStatus === 'error'
+                      ? Intent.DANGER
+                      : syncStatus === 'syncing'
+                        ? Intent.WARNING
+                        : Intent.SUCCESS
+                  }
+                >
+                  {syncStatusLabel}
+                </Tag>
+              ) : null}
+              {syncError ? (
+                <Callout compact intent={Intent.DANGER} title={syncError} />
+              ) : null}
+              <Button
+                icon="log-out"
+                text="Sign out"
+                disabled={authBusy}
+                onClick={handleSignOut}
+              />
+            </div>
+          ) : (
+            <div className="prefs-account-block">
+              <p className={`${Classes.RUNNING_TEXT} ${Classes.TEXT_MUTED}`}>
+                Optional: sign in with Google to sync your vocabulary across
+                devices.
+              </p>
+              <Button
+                icon="log-in"
+                intent={Intent.PRIMARY}
+                text="Sign in with Google"
+                disabled={authBusy}
+                onClick={handleSignIn}
+              />
+            </div>
+          )}
 
           <Divider className="prefs-divider" />
 
