@@ -26,7 +26,7 @@ export type VocabularyListProps = {
   onQueryChange: (value: string) => void
   onUpdate: (item: VocabItem) => void
   onRemove: (ids: string[]) => void
-  speechLang?: string
+  speechVoiceURI?: string
 }
 
 export function VocabularyList({
@@ -35,7 +35,7 @@ export function VocabularyList({
   onQueryChange,
   onUpdate,
   onRemove,
-  speechLang = 'en-US',
+  speechVoiceURI = '',
 }: VocabularyListProps) {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -91,7 +91,7 @@ export function VocabularyList({
   }
 
   const handlePronounce = (word: string) => {
-    const r = pronounceWord(word, { lang: speechLang })
+    const r = pronounceWord(word, { voiceURI: speechVoiceURI })
     setPronounceNotice(r.ok ? null : r.reason ?? 'Could not pronounce.')
   }
 

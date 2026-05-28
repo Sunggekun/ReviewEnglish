@@ -24,6 +24,10 @@ import { lookupEnglishWord } from './services/dictionary'
 import { translateEnglishToZh } from './services/translation'
 import type { ThemePreference } from './storage/themePreference'
 import { useThemePreference } from './hooks/useThemePreference'
+import { useSpeechVoices } from './hooks/useSpeechVoices'
+import { useSpeechVoicePreference } from './hooks/useSpeechVoicePreference'
+import { PREVIEW_SAMPLE, pronounceWord } from './services/pronounce'
+import { groupVoicesByLang } from './services/speechVoices'
 import { useAuth } from './hooks/useAuth'
 import { useVocabulary } from './hooks/useVocabulary'
 import { formatAuthError } from './firebase/auth'
@@ -40,7 +44,6 @@ function App() {
   const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth()
   const { items, setItems, removeItems, syncStatus, syncError } = useVocabulary(user)
   const [query, setQuery] = useState('')
-  const [speechLang, setSpeechLang] = useState<'en-US' | 'en-GB'>('en-US')
   const [addingBusy, setAddingBusy] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [isPrefsOpen, setIsPrefsOpen] = useState(false)
@@ -50,6 +53,10 @@ function App() {
 
   const { preference: themePreference, setPreference: setThemePreference } =
     useThemePreference()
+  const { voices, supported: speechSupported } = useSpeechVoices()
+  const voiceGroups = useMemo(() => groupVoicesByLang(voices), [voices])
+  const { voiceURI: speechVoiceURI, setVoiceURI: setSpeechVoiceURI } =
+    useSpeechVoicePreference()
 
   const syncStatusLabel =
     syncStatus === 'syncing'
@@ -293,7 +300,7 @@ function App() {
           onQueryChange={setQuery}
           onUpdate={handleUpdate}
           onRemove={handleRemove}
-          speechLang={speechLang}
+          speechVoiceURI={speechVoiceURI}
         />
       </main>
 
@@ -345,20 +352,46 @@ function App() {
 
           <Divider className="prefs-divider" />
 
-          <H5>Accent</H5>
-          <HTMLSelect
-            fill
-            value={speechLang}
-            onChange={(e) =>
-              setSpeechLang(
-                e.currentTarget.value === 'en-GB' ? 'en-GB' : 'en-US',
-              )
-            }
-            options={[
-              { label: 'American (en-US)', value: 'en-US' },
-              { label: 'British (en-GB)', value: 'en-GB' },
-            ]}
-          />
+          <H5>Voice</H5>
+          {!speechSupported ? (
+            <Callout
+              compact
+              intent={Intent.WARNING}
+              title="Speech not supported in this browser."
+            />
+          ) : null}
+          {speechSupported && voices.length === 0 ? (
+            <p className={`${Classes.RUNNING_TEXT} ${Classes.TEXT_MUTED}`}>
+              Loading voices…
+            </p>
+          ) : null}
+          <div className="prefs-voice-row">
+            <HTMLSelect
+              fill
+              disabled={!speechSupported || voices.length === 0}
+              value={speechVoiceURI}
+              onChange={(e) => setSpeechVoiceURI(e.currentTarget.value)}
+            >
+              <option value="">Browser default</option>
+              {voiceGroups.map((group) => (
+                <optgroup key={group.lang} label={group.lang}>
+                  {group.voices.map((v) => (
+                    <option key={v.voiceURI} value={v.voiceURI}>
+                      {v.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </HTMLSelect>
+            <Button
+              icon="volume-up"
+              text="Preview"
+              disabled={!speechSupported}
+              onClick={() =>
+                pronounceWord(PREVIEW_SAMPLE, { voiceURI: speechVoiceURI })
+              }
+            />
+          </div>
 
           <Divider className="prefs-divider" />
 

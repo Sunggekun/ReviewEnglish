@@ -104,6 +104,17 @@ html[data-bp-color-scheme='dark'] body {
   max-width: 100%;
 }
 
+.preferences-dialog .prefs-voice-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.preferences-dialog .prefs-voice-row .bp6-html-select {
+  flex: 1;
+  min-width: 0;
+}
+
 .vocab-margin-top {
   margin-top: 12px !important;
 }

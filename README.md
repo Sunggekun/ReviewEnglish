@@ -68,7 +68,7 @@ Restart `npm run dev` after changing env vars.
 | Cloud sync | Optional Google sign-in (Preferences → Account); Firestore doc at `users/{uid}/data/vocabulary` |
 | Translate to Chinese | MyMemory (`en → zh-TW`, Traditional Taiwan) |
 | IPA / phonics | First IPA string from dictionary API; editable as “phonics” |
-| Pronunciation | `speechSynthesis` (accent: American or British) |
+| Pronunciation | `speechSynthesis`; Preferences → **Voice** lists all browser voices, **Preview** button, choice persisted in `localStorage` |
 
 Duplicate words (same spelling, ignoring case) are rejected when adding.
 
