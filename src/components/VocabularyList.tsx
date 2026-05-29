@@ -48,6 +48,7 @@ export type VocabularyListProps = {
 const emDash = '—'
 const TABLE_HEIGHT_PX = 560
 const DEFAULT_ROW_HEIGHT = 52
+const EDIT_ROW_HEIGHT = 72
 const SECTION_HEADER_ROW_HEIGHT = 36
 
 export function VocabularyList({
@@ -263,10 +264,12 @@ export function VocabularyList({
 
   const rowHeights = useMemo(
     () =>
-      displayRows.map((row) =>
-        row.kind === 'header' ? SECTION_HEADER_ROW_HEIGHT : DEFAULT_ROW_HEIGHT,
-      ),
-    [displayRows],
+      displayRows.map((row) => {
+        if (row.kind === 'header') return SECTION_HEADER_ROW_HEIGHT
+        if (editingId === row.item.id) return EDIT_ROW_HEIGHT
+        return DEFAULT_ROW_HEIGHT
+      }),
+    [displayRows, editingId],
   )
 
   const isSectionHeaderRow = useCallback(
@@ -339,7 +342,7 @@ export function VocabularyList({
           wrapText={false}
           truncated={false}
         >
-          <Tag minimal intent="primary" large>
+          <Tag minimal intent="primary">
             {row.letter}
           </Tag>
         </Cell>
@@ -358,7 +361,13 @@ export function VocabularyList({
 
       return (
         <Cell interactive wrapText className={rowCellClass(item)}>
-          <div className="vocab-cell-word-inner">
+          <div
+            className={
+              editingId === item.id
+                ? 'vocab-cell-word-inner vocab-cell-word-inner--editing'
+                : 'vocab-cell-word-inner'
+            }
+          >
             {editingId === item.id ? (
               <InputGroup
                 className="vocab-cell-input"
@@ -371,7 +380,6 @@ export function VocabularyList({
                   if (evt.key === 'Escape') cancelEdit()
                   if (evt.key === 'Enter') saveEdit(item)
                 }}
-                small
               />
             ) : selectMode ? (
               <strong>{item.word}</strong>
@@ -460,7 +468,6 @@ export function VocabularyList({
                 if (evt.key === 'Escape') cancelEdit()
                 if (evt.key === 'Enter') saveEdit(item)
               }}
-              small
             />
           ) : selectMode ? (
             item.translationZh || emDash
@@ -521,7 +528,6 @@ export function VocabularyList({
                 if (evt.key === 'Escape') cancelEdit()
                 if (evt.key === 'Enter') saveEdit(item)
               }}
-              small
             />
           ) : selectMode ? (
             item.ipa || item.phonics || emDash
