@@ -259,12 +259,13 @@ html[data-bp-color-scheme='dark'] body {
   width: 100%;
 }
 
-/* Prevent the count Tag (e.g. "12/120") from shrinking/truncating in ControlGroup. */
-.vocab-panel .bp6-control-group>.bp6-tag {
+/* Prevent the count Tag (e.g. "12/120") from shrinking/truncating in the category bar. */
+.vocab-category-bar > .bp6-tag {
   flex: 0 0 auto;
   width: auto;
   max-width: none;
   white-space: nowrap;
+  align-self: center;
 }
 
 .vocab-select-topbar {
@@ -600,8 +601,7 @@ html[data-bp-color-scheme='dark'] .vocab-flashcard-meanings {
     flex: 1 1 auto !important;
   }
 
-  .vocab-panel .bp6-control-group>.bp6-button,
-  .vocab-panel .bp6-control-group>.bp6-tag {
+  .vocab-panel .bp6-control-group>.bp6-button {
     width: 100%;
     justify-content: center;
     box-sizing: border-box;

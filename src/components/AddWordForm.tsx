@@ -6,7 +6,6 @@ import {
   ControlGroup,
   Elevation,
   FormGroup,
-  H4,
   InputGroup,
   Intent,
 } from '@blueprintjs/core'
@@ -40,9 +39,11 @@ export function AddWordForm({ disabled, onSubmit }: AddWordFormProps) {
 
   return (
     <Card elevation={Elevation.TWO} className="vocab-panel">
-      <H4>Add a word</H4>
       <form onSubmit={(e) => void handleSubmit(e)}>
         <FormGroup
+          fill
+          label="Add a word"
+          labelFor="new-word-input"
           intent={localError ? Intent.DANGER : undefined}
           helperText={localError ?? undefined}
         >

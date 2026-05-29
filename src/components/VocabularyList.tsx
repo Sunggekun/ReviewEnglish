@@ -618,9 +618,6 @@ export function VocabularyList({
               autoComplete="off"
               onChange={(evt) => onQueryChange(evt.target.value)}
             />
-            <Tag minimal intent="primary">
-              {displayItems.length}/{items.length}
-            </Tag>
             {items.length > 0 ? (
               selectMode ? null : (
                 <>
@@ -640,7 +637,9 @@ export function VocabularyList({
                     aria-label="Select words to delete"
                     title="Select words to delete"
                     onClick={enterSelectMode}
-                  />
+                  >
+                    Delete
+                  </Button>
                 </>
               )
             ) : null}
@@ -653,6 +652,9 @@ export function VocabularyList({
             role="toolbar"
             aria-label="Filter by first letter"
           >
+            <Tag minimal intent="primary">
+              {displayItems.length}/{items.length}
+            </Tag>
             <Button
               small
               minimal
