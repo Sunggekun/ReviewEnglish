@@ -48,6 +48,7 @@ export type VocabularyListProps = {
 const emDash = '—'
 const TABLE_HEIGHT_PX = 560
 const DEFAULT_ROW_HEIGHT = 52
+const MOBILE_DEFAULT_ROW_HEIGHT = 68
 const EDIT_ROW_HEIGHT = 72
 const SECTION_HEADER_ROW_HEIGHT = 36
 
@@ -267,9 +268,9 @@ export function VocabularyList({
       displayRows.map((row) => {
         if (row.kind === 'header') return SECTION_HEADER_ROW_HEIGHT
         if (editingId === row.item.id) return EDIT_ROW_HEIGHT
-        return DEFAULT_ROW_HEIGHT
+        return isMobile ? MOBILE_DEFAULT_ROW_HEIGHT : DEFAULT_ROW_HEIGHT
       }),
-    [displayRows, editingId],
+    [displayRows, editingId, isMobile],
   )
 
   const isSectionHeaderRow = useCallback(

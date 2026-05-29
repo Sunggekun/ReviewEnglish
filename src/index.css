@@ -448,7 +448,20 @@ html[data-bp-color-scheme='dark'] body {
   }
 
   .vocab-cell-word-inner {
+    flex-direction: column;
+    align-items: flex-start;
     gap: 4px;
+  }
+
+  .vocab-cell-word-inner > strong,
+  .vocab-cell-word-inner > span[role='button'] {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .vocab-cell-word-inner > .bp6-button-group {
+    flex: 0 0 auto;
+    align-self: flex-start;
   }
 
   .vocab-cell-word-inner .bp6-button {
