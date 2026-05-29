@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
   Button,
   ButtonGroup,
@@ -9,16 +9,31 @@ import {
   ControlGroup,
   Elevation,
   FormGroup,
-  HTMLTable,
   InputGroup,
   NonIdealState,
   Dialog,
   Spinner,
   Tag,
 } from '@blueprintjs/core'
+import {
+  Cell,
+  Column,
+  ColumnHeaderCell,
+  SelectionModes,
+  Table,
+} from '@blueprintjs/table'
 import type { VocabItem } from '../types/vocab'
 import { pronounceWord } from '../services/pronounce'
 import type { DictionaryMeaning } from '../services/dictionary'
+import { useElementWidth, useMediaQuery } from '../hooks/useElementWidth'
+import { vocabColumnWidths } from './vocabColumnWidths'
+import {
+  buildGroupedDisplayRows,
+  collectFirstCharCategories,
+  getWordFirstCharCategory,
+  groupVocabByFirstChar,
+  type VocabDisplayRow,
+} from './vocabGroupByFirstChar'
 
 export type VocabularyListProps = {
   items: VocabItem[]
@@ -30,6 +45,11 @@ export type VocabularyListProps = {
   translationLanguageLabel?: string
 }
 
+const emDash = '—'
+const TABLE_HEIGHT_PX = 560
+const DEFAULT_ROW_HEIGHT = 52
+const SECTION_HEADER_ROW_HEIGHT = 36
+
 export function VocabularyList({
   items,
   query,
@@ -39,7 +59,9 @@ export function VocabularyList({
   speechVoiceURI = '',
   translationLanguageLabel = 'Translation',
 }: VocabularyListProps) {
-  const filtered = useMemo(() => {
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
+
+  const searchFiltered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return items
     return items.filter(
@@ -49,6 +71,42 @@ export function VocabularyList({
         item.ipa.toLowerCase().includes(q),
     )
   }, [items, query])
+
+  const availableCategories = useMemo(
+    () => collectFirstCharCategories(searchFiltered),
+    [searchFiltered],
+  )
+
+  const filtered = useMemo(() => {
+    if (!categoryFilter) return searchFiltered
+    return searchFiltered.filter(
+      (item) => getWordFirstCharCategory(item.word) === categoryFilter,
+    )
+  }, [categoryFilter, searchFiltered])
+
+  const displayRows = useMemo(
+    () => buildGroupedDisplayRows(groupVocabByFirstChar(filtered)),
+    [filtered],
+  )
+
+  const displayItems = useMemo(
+    () =>
+      displayRows.flatMap((row) => (row.kind === 'item' ? [row.item] : [])),
+    [displayRows],
+  )
+
+  const getRow = useCallback(
+    (rowIndex: number): VocabDisplayRow | undefined => displayRows[rowIndex],
+    [displayRows],
+  )
+
+  const getItemAtRow = useCallback(
+    (rowIndex: number): VocabItem | undefined => {
+      const row = getRow(rowIndex)
+      return row?.kind === 'item' ? row.item : undefined
+    },
+    [getRow],
+  )
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draftWord, setDraftWord] = useState('')
@@ -63,6 +121,10 @@ export function VocabularyList({
 
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
+  const isMobile = useMediaQuery('(max-width: 640px)')
+  const hasTable = displayRows.length > 0
+  const [tableWrapRef, tableWidth] = useElementWidth<HTMLDivElement>(hasTable)
+  const minColumnWidth = isMobile ? 32 : 50
 
   const startEdit = (item: VocabItem) => {
     setEditingId(item.id)
@@ -125,22 +187,23 @@ export function VocabularyList({
   }
 
   const allFilteredSelected =
-    filtered.length > 0 && filtered.every((item) => selectedIds.has(item.id))
+    displayItems.length > 0 &&
+    displayItems.every((item) => selectedIds.has(item.id))
   const someFilteredSelected =
-    filtered.some((item) => selectedIds.has(item.id)) && !allFilteredSelected
+    displayItems.some((item) => selectedIds.has(item.id)) && !allFilteredSelected
 
   const toggleSelectAllFiltered = () => {
     if (allFilteredSelected) {
       setSelectedIds((prev) => {
         const next = new Set(prev)
-        for (const item of filtered) next.delete(item.id)
+        for (const item of displayItems) next.delete(item.id)
         return next
       })
       return
     }
     setSelectedIds((prev) => {
       const next = new Set(prev)
-      for (const item of filtered) next.add(item.id)
+      for (const item of displayItems) next.add(item.id)
       return next
     })
   }
@@ -173,6 +236,364 @@ export function VocabularyList({
     }
   }
 
+  const cellRendererDependencies = useMemo(
+    () => [
+      editingId,
+      draftWord,
+      draftZh,
+      draftIpa,
+      selectMode,
+      selectedIds,
+      displayRows,
+      speechVoiceURI,
+      translationLanguageLabel,
+    ],
+    [
+      editingId,
+      draftWord,
+      draftZh,
+      draftIpa,
+      selectMode,
+      selectedIds,
+      displayRows,
+      speechVoiceURI,
+      translationLanguageLabel,
+    ],
+  )
+
+  const rowHeights = useMemo(
+    () =>
+      displayRows.map((row) =>
+        row.kind === 'header' ? SECTION_HEADER_ROW_HEIGHT : DEFAULT_ROW_HEIGHT,
+      ),
+    [displayRows],
+  )
+
+  const isSectionHeaderRow = useCallback(
+    (rowIndex: number) => getRow(rowIndex)?.kind === 'header',
+    [getRow],
+  )
+
+  const rowCellClass = useCallback(
+    (item: VocabItem) =>
+      selectMode && selectedIds.has(item.id) ? 'vocab-bp-cell-selected' : undefined,
+    [selectMode, selectedIds],
+  )
+
+  const renderSelectHeader = useCallback(
+    () => (
+      <ColumnHeaderCell name="">
+        <Checkbox
+          aria-label="Select all visible words"
+          checked={allFilteredSelected}
+          indeterminate={someFilteredSelected}
+          onChange={toggleSelectAllFiltered}
+        />
+      </ColumnHeaderCell>
+    ),
+    [allFilteredSelected, someFilteredSelected, toggleSelectAllFiltered],
+  )
+
+  const renderSelectCell = useCallback(
+    (rowIndex: number) => {
+      if (isSectionHeaderRow(rowIndex)) {
+        return <Cell className="vocab-bp-cell-section-header" />
+      }
+      const item = getItemAtRow(rowIndex)
+      if (!item) return <Cell />
+      return (
+        <Cell interactive className={rowCellClass(item)}>
+          <Checkbox
+            aria-label={`Select ${item.word}`}
+            checked={selectedIds.has(item.id)}
+            onChange={() => toggleSelected(item.id)}
+          />
+        </Cell>
+      )
+    },
+    [getItemAtRow, isSectionHeaderRow, rowCellClass, selectedIds, toggleSelected],
+  )
+
+  const renderSectionHeaderCell = useCallback(
+    (rowIndex: number) => {
+      const row = getRow(rowIndex)
+      if (row?.kind !== 'header') return null
+      return (
+        <Cell
+          className="vocab-bp-cell-section-header"
+          wrapText={false}
+          truncated={false}
+        />
+      )
+    },
+    [getRow],
+  )
+
+  const renderSectionHeaderWordCell = useCallback(
+    (rowIndex: number) => {
+      const row = getRow(rowIndex)
+      if (row?.kind !== 'header') return null
+      return (
+        <Cell
+          className="vocab-bp-cell-section-header"
+          wrapText={false}
+          truncated={false}
+        >
+          <Tag minimal intent="primary" large>
+            {row.letter}
+          </Tag>
+        </Cell>
+      )
+    },
+    [getRow],
+  )
+
+  const renderWordCell = useCallback(
+    (rowIndex: number) => {
+      const sectionCell = renderSectionHeaderWordCell(rowIndex)
+      if (sectionCell) return sectionCell
+
+      const item = getItemAtRow(rowIndex)
+      if (!item) return <Cell />
+
+      return (
+        <Cell interactive wrapText className={rowCellClass(item)}>
+          <div className="vocab-cell-word-inner">
+            {editingId === item.id ? (
+              <InputGroup
+                className="vocab-cell-input"
+                fill
+                aria-label={`Word for ${item.word}`}
+                value={draftWord}
+                onChange={(evt) => setDraftWord(evt.target.value)}
+                autoFocus
+                onKeyDown={(evt) => {
+                  if (evt.key === 'Escape') cancelEdit()
+                  if (evt.key === 'Enter') saveEdit(item)
+                }}
+                small
+              />
+            ) : selectMode ? (
+              <strong>{item.word}</strong>
+            ) : (
+              <span
+                role="button"
+                tabIndex={0}
+                style={{ cursor: 'text' }}
+                onClick={() => startEdit(item)}
+                onKeyDown={(evt) => {
+                  if (evt.key === 'Enter' || evt.key === ' ') startEdit(item)
+                }}
+                aria-label={`Edit word for ${item.word}`}
+                title="Click to edit"
+              >
+                <strong>{item.word}</strong>
+              </span>
+            )}
+            {selectMode ? null : editingId === item.id ? (
+              <ButtonGroup variant="minimal" size="small">
+                <Button
+                  icon="floppy-disk"
+                  intent="success"
+                  aria-label={`Save changes for ${item.word}`}
+                  title="Save"
+                  onClick={() => saveEdit(item)}
+                />
+                <Button
+                  icon="cross"
+                  aria-label={`Cancel editing ${item.word}`}
+                  title="Cancel"
+                  onClick={cancelEdit}
+                />
+              </ButtonGroup>
+            ) : (
+              <ButtonGroup variant="minimal" size="small">
+                <Button
+                  icon="volume-up"
+                  aria-label={`Pronounce ${item.word}`}
+                  onClick={() => handlePronounce(item.word)}
+                />
+                <Button
+                  icon="info-sign"
+                  aria-label={`Show meanings for ${item.word}`}
+                  title="Show meanings from Free Dictionary API"
+                  onClick={() => openMeaningsDialog(item.word)}
+                />
+              </ButtonGroup>
+            )}
+          </div>
+        </Cell>
+      )
+    },
+    [
+      draftWord,
+      editingId,
+      getItemAtRow,
+      handlePronounce,
+      openMeaningsDialog,
+      renderSectionHeaderWordCell,
+      rowCellClass,
+      saveEdit,
+      selectMode,
+      startEdit,
+    ],
+  )
+
+  const renderTranslationCell = useCallback(
+    (rowIndex: number) => {
+      const sectionCell = renderSectionHeaderCell(rowIndex)
+      if (sectionCell) return sectionCell
+
+      const item = getItemAtRow(rowIndex)
+      if (!item) return <Cell />
+
+      return (
+        <Cell interactive wrapText className={rowCellClass(item)}>
+          {editingId === item.id ? (
+            <InputGroup
+              className="vocab-cell-input"
+              fill
+              aria-label={`${translationLanguageLabel} for ${item.word}`}
+              value={draftZh}
+              onChange={(evt) => setDraftZh(evt.target.value)}
+              onKeyDown={(evt) => {
+                if (evt.key === 'Escape') cancelEdit()
+                if (evt.key === 'Enter') saveEdit(item)
+              }}
+              small
+            />
+          ) : selectMode ? (
+            item.translationZh || emDash
+          ) : (
+            <span
+              role="button"
+              tabIndex={0}
+              style={{ cursor: 'text' }}
+              onClick={() => startEdit(item)}
+              onKeyDown={(evt) => {
+                if (evt.key === 'Enter' || evt.key === ' ') startEdit(item)
+              }}
+              aria-label={`Edit ${translationLanguageLabel} for ${item.word}`}
+              title="Click to edit"
+            >
+              {item.translationZh || emDash}
+            </span>
+          )}
+        </Cell>
+      )
+    },
+    [
+      draftZh,
+      editingId,
+      getItemAtRow,
+      renderSectionHeaderCell,
+      rowCellClass,
+      saveEdit,
+      selectMode,
+      startEdit,
+      translationLanguageLabel,
+    ],
+  )
+
+  const renderIpaCell = useCallback(
+    (rowIndex: number) => {
+      const sectionCell = renderSectionHeaderCell(rowIndex)
+      if (sectionCell) return sectionCell
+
+      const item = getItemAtRow(rowIndex)
+      if (!item) return <Cell />
+
+      return (
+        <Cell
+          interactive
+          wrapText
+          className={rowCellClass(item)}
+          style={{ fontFamily: 'Georgia, serif' }}
+        >
+          {editingId === item.id ? (
+            <InputGroup
+              className="vocab-cell-input"
+              fill
+              aria-label={`Phonics (IPA) for ${item.word}`}
+              value={draftIpa}
+              onChange={(evt) => setDraftIpa(evt.target.value)}
+              onKeyDown={(evt) => {
+                if (evt.key === 'Escape') cancelEdit()
+                if (evt.key === 'Enter') saveEdit(item)
+              }}
+              small
+            />
+          ) : selectMode ? (
+            item.ipa || item.phonics || emDash
+          ) : (
+            <span
+              role="button"
+              tabIndex={0}
+              style={{ cursor: 'text' }}
+              onClick={() => startEdit(item)}
+              onKeyDown={(evt) => {
+                if (evt.key === 'Enter' || evt.key === ' ') startEdit(item)
+              }}
+              aria-label={`Edit phonics (IPA) for ${item.word}`}
+              title="Click to edit"
+            >
+              {item.ipa || item.phonics || emDash}
+            </span>
+          )}
+        </Cell>
+      )
+    },
+    [draftIpa, editingId, getItemAtRow, renderSectionHeaderCell, rowCellClass, saveEdit, selectMode, startEdit],
+  )
+
+  const columnWidths = useMemo(
+    () =>
+      vocabColumnWidths(tableWidth, selectMode, {
+        minColWidth: minColumnWidth,
+        mobile: isMobile,
+      }),
+    [tableWidth, selectMode, minColumnWidth, isMobile],
+  )
+
+  const tableColumns = useMemo(() => {
+    const columns = []
+    if (selectMode) {
+      columns.push(
+        <Column
+          key="select"
+          id="select"
+          name=""
+          cellRenderer={renderSelectCell}
+          columnHeaderCellRenderer={renderSelectHeader}
+        />,
+      )
+    }
+    columns.push(
+      <Column key="word" id="word" name="Word" cellRenderer={renderWordCell} />,
+      <Column
+        key="translation"
+        id="translation"
+        name={translationLanguageLabel}
+        cellRenderer={renderTranslationCell}
+      />,
+      <Column
+        key="ipa"
+        id="ipa"
+        name="Phonics (IPA)"
+        cellRenderer={renderIpaCell}
+      />,
+    )
+    return columns
+  }, [
+    renderIpaCell,
+    renderSelectCell,
+    renderSelectHeader,
+    renderTranslationCell,
+    renderWordCell,
+    selectMode,
+    translationLanguageLabel,
+  ])
+
   return (
     <section className="vocab-list-section">
       <Card elevation={Elevation.TWO} className="vocab-panel">
@@ -189,7 +610,7 @@ export function VocabularyList({
               onChange={(evt) => onQueryChange(evt.target.value)}
             />
             <Tag minimal intent="primary">
-              {filtered.length}/{items.length}
+              {displayItems.length}/{items.length}
             </Tag>
             {items.length > 0 ? (
               selectMode ? null : (
@@ -204,6 +625,39 @@ export function VocabularyList({
             ) : null}
           </ControlGroup>
         </FormGroup>
+
+        {availableCategories.length > 0 ? (
+          <div
+            className="vocab-category-bar"
+            role="toolbar"
+            aria-label="Filter by first letter"
+          >
+            <Button
+              small
+              minimal
+              active={categoryFilter === null}
+              aria-pressed={categoryFilter === null}
+              onClick={() => setCategoryFilter(null)}
+            >
+              All
+            </Button>
+            {availableCategories.map((letter) => (
+              <Button
+                key={letter}
+                small
+                minimal
+                active={categoryFilter === letter}
+                aria-pressed={categoryFilter === letter}
+                aria-label={`Show words starting with ${letter}`}
+                onClick={() =>
+                  setCategoryFilter((prev) => (prev === letter ? null : letter))
+                }
+              >
+                {letter}
+              </Button>
+            ))}
+          </div>
+        ) : null}
 
         {selectMode ? (
           <div
@@ -256,7 +710,7 @@ export function VocabularyList({
           />
         ) : null}
 
-        {filtered.length === 0 ? (
+        {displayItems.length === 0 ? (
           <NonIdealState
             className="vocab-non-ideal"
             icon="bookmark"
@@ -268,192 +722,36 @@ export function VocabularyList({
             description={
               items.length === 0
                 ? 'Add a vocabulary entry above.'
-                : 'Try a different keyword or clear the filter.'
+                : categoryFilter
+                  ? `No words start with “${categoryFilter}”.`
+                  : 'Try a different keyword or clear the filter.'
             }
           />
         ) : (
-          <div className="table-scroll vocab-margin-top">
-            <HTMLTable
-              bordered
-              interactive
-              striped
+          <div
+            ref={tableWrapRef}
+            className="vocab-bp-table-wrap vocab-margin-top"
+            style={{ height: TABLE_HEIGHT_PX }}
+          >
+            <Table
+              numRows={displayRows.length}
+              rowHeights={rowHeights}
+              enableRowHeader={false}
+              enableColumnResizing={!isMobile}
+              enableRowResizing={false}
+              defaultRowHeight={DEFAULT_ROW_HEIGHT}
+              minColumnWidth={minColumnWidth}
+              columnWidths={columnWidths}
+              selectionModes={SelectionModes.NONE}
+              cellRendererDependencies={cellRendererDependencies}
               className={
-                selectMode
-                  ? 'vocab-html-table vocab-html-table--select'
-                  : 'vocab-html-table'
+                isMobile
+                  ? 'vocab-bp-table vocab-bp-table--mobile'
+                  : 'vocab-bp-table'
               }
-              style={{ width: '100%' }}
             >
-              <thead>
-                <tr>
-                  {selectMode ? (
-                    <th scope="col" className="vocab-cell-select">
-                      <Checkbox
-                        aria-label="Select all visible words"
-                        checked={allFilteredSelected}
-                        indeterminate={someFilteredSelected}
-                        onChange={toggleSelectAllFiltered}
-                      />
-                    </th>
-                  ) : null}
-                  <th scope="col">Word</th>
-                  <th scope="col">{translationLanguageLabel}</th>
-                  <th scope="col">Phonics (IPA)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((item) => (
-                  <tr
-                    key={item.id}
-                    className={
-                      selectMode && selectedIds.has(item.id)
-                        ? 'vocab-row-selected'
-                        : undefined
-                    }
-                  >
-                    {selectMode ? (
-                      <td className="vocab-cell-select">
-                        <Checkbox
-                          aria-label={`Select ${item.word}`}
-                          checked={selectedIds.has(item.id)}
-                          onChange={() => toggleSelected(item.id)}
-                        />
-                      </td>
-                    ) : null}
-                    <td className="vocab-cell-word">
-                      <div className="vocab-cell-word-inner">
-                        {editingId === item.id ? (
-                          <InputGroup
-                            className="vocab-cell-input"
-                            fill
-                            aria-label={`Word for ${item.word}`}
-                            value={draftWord}
-                            onChange={(evt) => setDraftWord(evt.target.value)}
-                            autoFocus
-                            onKeyDown={(evt) => {
-                              if (evt.key === 'Escape') cancelEdit()
-                              if (evt.key === 'Enter') saveEdit(item)
-                            }}
-                            small
-                          />
-                        ) : selectMode ? (
-                          <strong>{item.word}</strong>
-                        ) : (
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            style={{ cursor: 'text' }}
-                            onClick={() => startEdit(item)}
-                            onKeyDown={(evt) => {
-                              if (evt.key === 'Enter' || evt.key === ' ') startEdit(item)
-                            }}
-                            aria-label={`Edit word for ${item.word}`}
-                            title="Click to edit"
-                          >
-                            <strong>{item.word}</strong>
-                          </span>
-                        )}
-                        {selectMode ? null : editingId === item.id ? (
-                          <ButtonGroup variant="minimal" size="small">
-                            <Button
-                              icon="floppy-disk"
-                              intent="success"
-                              aria-label={`Save changes for ${item.word}`}
-                              title="Save"
-                              onClick={() => saveEdit(item)}
-                            />
-                            <Button
-                              icon="cross"
-                              aria-label={`Cancel editing ${item.word}`}
-                              title="Cancel"
-                              onClick={cancelEdit}
-                            />
-                          </ButtonGroup>
-                        ) : (
-                          <ButtonGroup variant="minimal" size="small">
-                            <Button
-                              icon="volume-up"
-                              aria-label={`Pronounce ${item.word}`}
-                              onClick={() => handlePronounce(item.word)}
-                            />
-                            <Button
-                              icon="info-sign"
-                              aria-label={`Show meanings for ${item.word}`}
-                              title="Show meanings from Free Dictionary API"
-                              onClick={() => openMeaningsDialog(item.word)}
-                            />
-                          </ButtonGroup>
-                        )}
-                      </div>
-                    </td>
-                    <td className="vocab-cell-zh">
-                      {editingId === item.id ? (
-                        <InputGroup
-                          className="vocab-cell-input"
-                          fill
-                          aria-label={`${translationLanguageLabel} for ${item.word}`}
-                          value={draftZh}
-                          onChange={(evt) => setDraftZh(evt.target.value)}
-                          onKeyDown={(evt) => {
-                            if (evt.key === 'Escape') cancelEdit()
-                            if (evt.key === 'Enter') saveEdit(item)
-                          }}
-                          small
-                        />
-                      ) : selectMode ? (
-                        item.translationZh || emDash
-                      ) : (
-                        <span
-                          role="button"
-                          tabIndex={0}
-                          style={{ cursor: 'text' }}
-                          onClick={() => startEdit(item)}
-                          onKeyDown={(evt) => {
-                            if (evt.key === 'Enter' || evt.key === ' ') startEdit(item)
-                          }}
-                          aria-label={`Edit ${translationLanguageLabel} for ${item.word}`}
-                          title="Click to edit"
-                        >
-                          {item.translationZh || emDash}
-                        </span>
-                      )}
-                    </td>
-                    <td className="vocab-cell-ipa" style={{ fontFamily: 'Georgia, serif' }}>
-                      {editingId === item.id ? (
-                        <InputGroup
-                          className="vocab-cell-input"
-                          fill
-                          aria-label={`Phonics (IPA) for ${item.word}`}
-                          value={draftIpa}
-                          onChange={(evt) => setDraftIpa(evt.target.value)}
-                          onKeyDown={(evt) => {
-                            if (evt.key === 'Escape') cancelEdit()
-                            if (evt.key === 'Enter') saveEdit(item)
-                          }}
-                          small
-                        />
-                      ) : selectMode ? (
-                        item.ipa || item.phonics || emDash
-                      ) : (
-                        <span
-                          role="button"
-                          tabIndex={0}
-                          style={{ cursor: 'text' }}
-                          onClick={() => startEdit(item)}
-                          onKeyDown={(evt) => {
-                            if (evt.key === 'Enter' || evt.key === ' ') startEdit(item)
-                          }}
-                          aria-label={`Edit phonics (IPA) for ${item.word}`}
-                          title="Click to edit"
-                        >
-                          {item.ipa || item.phonics || emDash}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </HTMLTable>
+              {tableColumns}
+            </Table>
           </div>
         )}
 
@@ -510,5 +808,3 @@ export function VocabularyList({
     </section>
   )
 }
-
-const emDash = '—'
