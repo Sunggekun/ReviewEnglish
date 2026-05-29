@@ -13,6 +13,7 @@ import {
   Tag,
 } from '@blueprintjs/core'
 import { AddWordForm } from './components/AddWordForm'
+import { AddWordPreviewDialog } from './components/AddWordPreviewDialog'
 import { VocabularyList } from './components/VocabularyList'
 import {
   newVocabItem,
@@ -20,8 +21,7 @@ import {
   serializeVocabulary,
 } from './storage/vocabStore'
 import type { VocabItem } from './types/vocab'
-import { lookupEnglishWord } from './services/dictionary'
-import { translateEnglish } from './services/translation'
+import { lookupWordForVocab } from './services/vocabLookup'
 import type { ThemePreference } from './storage/themePreference'
 import { useThemePreference } from './hooks/useThemePreference'
 import { useSpeechVoices } from './hooks/useSpeechVoices'
@@ -51,6 +51,13 @@ function App() {
   const { items, setItems, removeItems, syncStatus, syncError } = useVocabulary(user)
   const [query, setQuery] = useState('')
   const [addingBusy, setAddingBusy] = useState(false)
+  const [addPreview, setAddPreview] = useState<{
+    id: string
+    word: string
+    translationZh: string
+    ipa: string
+    hints: string[]
+  } | null>(null)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [isPrefsOpen, setIsPrefsOpen] = useState(false)
   const [authBusy, setAuthBusy] = useState(false)
@@ -113,7 +120,7 @@ function App() {
     }
   }
 
-  const handleAddWord = async (word: string) => {
+  const handlePreviewWord = async (word: string) => {
     const lowered = word.toLowerCase()
     if (sortedItems.some((i) => i.word.toLowerCase() === lowered)) {
       throw new Error(`"${word}" is already in your list.`)
@@ -123,51 +130,40 @@ function App() {
     setStatusMessage(null)
 
     try {
-      const [dictOutcome, zhOutcome] = await Promise.allSettled([
-        lookupEnglishWord(word),
-        translateEnglish(word, translateLanguage),
-      ])
-
-      let ipa = ''
-      if (dictOutcome.status === 'fulfilled')
-        ipa = dictOutcome.value.ipa.trim()
-
-      let translationZh = ''
-      if (zhOutcome.status === 'fulfilled')
-        translationZh = zhOutcome.value.trim()
-
-      const item = newVocabItem({
+      const { translationZh, ipa, hints } = await lookupWordForVocab(
+        word,
+        translateLanguage,
+        translateLanguageLabel,
+      )
+      setAddPreview({
+        id: crypto.randomUUID(),
         word,
         translationZh,
         ipa,
-        phonics: ipa,
+        hints,
       })
-
-      setItems((prev) => [...prev, item])
-
-      const hints: string[] = []
-      if (dictOutcome.status === 'rejected')
-        hints.push(
-          `Could not look up IPA (${dictOutcome.reason instanceof Error ? dictOutcome.reason.message : String(dictOutcome.reason)}). You can edit it.`,
-        )
-      else if (!ipa)
-        hints.push(
-          'No IPA returned for this word. You can edit phonics/IPA manually.',
-        )
-
-      if (zhOutcome.status === 'rejected')
-        hints.push(
-          `Could not translate automatically (${zhOutcome.reason instanceof Error ? zhOutcome.reason.message : String(zhOutcome.reason)}). Edit ${translateLanguageLabel} manually.`,
-        )
-      else if (!translationZh)
-        hints.push(
-          `${translateLanguageLabel} translation missing. Paste or type it manually in Edit.`,
-        )
-
-      setStatusMessage(hints.length ? hints.join(' ') : null)
     } finally {
       setAddingBusy(false)
     }
+  }
+
+  const handleConfirmAddPreview = (translationZh: string, ipa: string) => {
+    if (!addPreview) return
+
+    const item = newVocabItem({
+      word: addPreview.word,
+      translationZh,
+      ipa,
+      phonics: ipa,
+    })
+
+    setItems((prev) => [...prev, item])
+    setAddPreview(null)
+    setStatusMessage(null)
+  }
+
+  const handleDiscardAddPreview = () => {
+    setAddPreview(null)
   }
 
   const handleUpdate = (updated: VocabItem) => {
@@ -304,7 +300,7 @@ function App() {
 
       <main className="app-main">
         <div className="app-top-row">
-          <AddWordForm disabled={addingBusy} onSubmit={handleAddWord} />
+          <AddWordForm disabled={addingBusy} onSubmit={handlePreviewWord} />
         </div>
         <VocabularyList
           items={sortedItems}
@@ -341,6 +337,18 @@ function App() {
           <a href="https://blueprintjs.com/">Blueprint&nbsp;6</a> + React.
         </div>
       </footer>
+
+      <AddWordPreviewDialog
+        key={addPreview?.id ?? 'closed'}
+        isOpen={addPreview !== null}
+        word={addPreview?.word ?? ''}
+        translationZh={addPreview?.translationZh ?? ''}
+        ipa={addPreview?.ipa ?? ''}
+        hints={addPreview?.hints ?? []}
+        translationLanguageLabel={translateLanguageLabel}
+        onConfirm={handleConfirmAddPreview}
+        onDiscard={handleDiscardAddPreview}
+      />
 
       <Dialog
         className="preferences-dialog"

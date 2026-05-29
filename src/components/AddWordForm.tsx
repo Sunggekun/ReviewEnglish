@@ -43,18 +43,14 @@ export function AddWordForm({ disabled, onSubmit }: AddWordFormProps) {
       <H4>Add a word</H4>
       <form onSubmit={(e) => void handleSubmit(e)}>
         <FormGroup
-          labelInfo="(required)"
-          labelFor="new-word-input"
-          label="English word"
           intent={localError ? Intent.DANGER : undefined}
-          helperText={
-            localError ?? 'Lookups run after Add (dictionary IPA + zh-TW).'
-          }
+          helperText={localError ?? undefined}
         >
           <ControlGroup fill>
             <InputGroup
               fill
               autoComplete="off"
+              aria-label="English word"
               disabled={disabled}
               id="new-word-input"
               placeholder="English word…"
@@ -69,7 +65,7 @@ export function AddWordForm({ disabled, onSubmit }: AddWordFormProps) {
               loading={disabled}
               disabled={disabled}
               type="submit"
-              text={disabled ? 'Adding…' : 'Add'}
+              text={disabled ? 'Looking up…' : 'Add'}
             />
           </ControlGroup>
         </FormGroup>

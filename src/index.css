@@ -103,6 +103,18 @@ html[data-bp-color-scheme='dark'] body {
   min-width: 0;
 }
 
+.add-word-preview-dialog .add-word-preview-word {
+  margin: 0 0 12px;
+}
+
+.add-word-preview-dialog .add-word-preview-hints {
+  margin-bottom: 12px;
+}
+
+.add-word-preview-dialog .add-word-preview-ipa-input input {
+  font-family: Georgia, serif;
+}
+
 .vocab-margin-top {
   margin-top: 12px !important;
 }
