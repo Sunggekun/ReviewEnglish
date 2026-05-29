@@ -290,6 +290,120 @@ html[data-bp-color-scheme='dark'] body {
   padding-bottom: 8px !important;
 }
 
+.vocab-flashcard-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(16px, 4vw, 32px);
+  box-sizing: border-box;
+  background: color-mix(
+    in srgb,
+    var(--bp-surface-background-color-default-rest, #1c2127) 55%,
+    transparent
+  );
+  backdrop-filter: blur(4px);
+}
+
+.vocab-flashcard-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 100%;
+  overflow: auto;
+}
+
+.vocab-flashcard-header {
+  display: flex;
+  justify-content: center;
+}
+
+.vocab-flashcard-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: clamp(24px, 5vw, 40px) clamp(20px, 4vw, 32px);
+  text-align: center;
+}
+
+.vocab-flashcard-word-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.vocab-flashcard-word {
+  margin: 0;
+  font-size: clamp(1.75rem, 6vw, 2.25rem);
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.vocab-flashcard-ipa {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--bp-typography-color-muted-rest, #5f6b7c);
+}
+
+.vocab-flashcard-translation {
+  width: 100%;
+  margin-top: 8px;
+  padding: 16px;
+  border-radius: 6px;
+  background: var(--bp-surface-background-color-subtle-rest, #f6f7f9);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 72px;
+  justify-content: center;
+}
+
+html.bp6-dark .vocab-flashcard-translation,
+html[data-bp-color-scheme='dark'] .vocab-flashcard-translation {
+  background: color-mix(
+    in srgb,
+    var(--bp-surface-background-color-default-rest, #1c2127) 88%,
+    #fff 12%
+  );
+}
+
+.vocab-flashcard-translation-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--bp-typography-color-muted-rest, #5f6b7c);
+}
+
+.vocab-flashcard-translation-hidden {
+  color: var(--bp-typography-color-muted-rest, #5f6b7c);
+  font-style: italic;
+}
+
+.vocab-flashcard-translation--revealed {
+  font-size: 1.15rem;
+}
+
+.vocab-flashcard-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vocab-flashcard-toolbar .bp6-button-group {
+  width: 100%;
+}
+
+.vocab-flashcard-toolbar .bp6-button-group .bp6-button {
+  flex: 1 1 0;
+}
+
 .prefs-account-block {
   display: flex;
   flex-direction: column;
@@ -422,6 +536,11 @@ html[data-bp-color-scheme='dark'] body {
 
   .vocab-select-topbar__actions .bp6-button {
     flex: 1 1 0;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .vocab-flashcard-toolbar .bp6-button-group .bp6-button {
     min-height: 44px;
     justify-content: center;
   }

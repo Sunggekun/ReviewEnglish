@@ -34,6 +34,7 @@ import {
   groupVocabByFirstChar,
   type VocabDisplayRow,
 } from './vocabGroupByFirstChar'
+import { VocabularyFlashcards } from './VocabularyFlashcards'
 
 export type VocabularyListProps = {
   items: VocabItem[]
@@ -123,6 +124,7 @@ export function VocabularyList({
 
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
+  const [flashcardOpen, setFlashcardOpen] = useState(false)
   const isMobile = useMediaQuery('(max-width: 640px)')
   const hasTable = displayRows.length > 0
   const [tableWrapRef, tableWidth] = useElementWidth<HTMLDivElement>(hasTable)
@@ -621,13 +623,25 @@ export function VocabularyList({
             </Tag>
             {items.length > 0 ? (
               selectMode ? null : (
-                <Button
-                  icon="trash"
-                  intent="danger"
-                  aria-label="Select words to delete"
-                  title="Select words to delete"
-                  onClick={enterSelectMode}
-                />
+                <>
+                  <Button
+                    className={Classes.FIXED}
+                    icon="learning"
+                    aria-label="Study flashcards"
+                    title="Study flashcards"
+                    onClick={() => setFlashcardOpen(true)}
+                  >
+                    Flashcards
+                  </Button>
+                  <Button
+                    className={Classes.FIXED}
+                    icon="trash"
+                    intent="danger"
+                    aria-label="Select words to delete"
+                    title="Select words to delete"
+                    onClick={enterSelectMode}
+                  />
+                </>
               )
             ) : null}
           </ControlGroup>
@@ -811,6 +825,15 @@ export function VocabularyList({
             )}
           </div>
         </Dialog>
+
+        {flashcardOpen ? (
+          <VocabularyFlashcards
+            items={items}
+            translationLanguageLabel={translationLanguageLabel}
+            speechVoiceURI={speechVoiceURI}
+            onExit={() => setFlashcardOpen(false)}
+          />
+        ) : null}
       </Card>
     </section>
   )
