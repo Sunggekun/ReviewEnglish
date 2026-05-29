@@ -314,7 +314,8 @@ html[data-bp-color-scheme='dark'] body {
   width: 100%;
   max-width: 480px;
   max-height: 100%;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .vocab-flashcard-header {
@@ -329,6 +330,8 @@ html[data-bp-color-scheme='dark'] body {
   gap: 12px;
   padding: clamp(24px, 5vw, 40px) clamp(20px, 4vw, 32px);
   text-align: center;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .vocab-flashcard-word-row {
@@ -388,6 +391,75 @@ html[data-bp-color-scheme='dark'] .vocab-flashcard-translation {
 
 .vocab-flashcard-translation--revealed {
   font-size: 1.15rem;
+}
+
+.vocab-flashcard-meanings {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  border-radius: 6px;
+  background: var(--bp-surface-background-color-subtle-rest, #f6f7f9);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 72px;
+}
+
+html.bp6-dark .vocab-flashcard-meanings,
+html[data-bp-color-scheme='dark'] .vocab-flashcard-meanings {
+  background: color-mix(
+    in srgb,
+    var(--bp-surface-background-color-default-rest, #1c2127) 88%,
+    #fff 12%
+  );
+}
+
+.vocab-flashcard-meanings:not(.vocab-flashcard-meanings--revealed) {
+  max-height: 72px;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.vocab-flashcard-meanings--revealed {
+  max-height: min(40vh, 280px);
+  justify-content: flex-start;
+  align-items: stretch;
+  overflow-x: hidden;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.vocab-flashcard-meanings-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.vocab-flashcard-meanings-empty {
+  margin: 0;
+  text-align: center;
+  color: var(--bp-typography-color-muted-rest, #5f6b7c);
+}
+
+.vocab-flashcard-meanings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.95rem;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.vocab-flashcard-meaning-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .vocab-flashcard-toolbar {
