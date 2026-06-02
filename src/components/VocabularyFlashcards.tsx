@@ -251,6 +251,13 @@ export function VocabularyFlashcards({
               Previous
             </Button>
             <Button
+              icon="volume-up"
+              aria-label={`Pronounce ${current.word}`}
+              onClick={handlePronounce}
+            >
+              Pronounce
+            </Button>
+            <Button
               endIcon="chevron-right"
               disabled={atEnd}
               aria-label="Next card"
